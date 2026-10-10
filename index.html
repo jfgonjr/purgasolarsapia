@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proteção Solar Inteligente · Purga anti-congelamento de 10 mm</title>
+  <meta name="description" content="Como um sensor DS18B20, um relógio RTC e uma válvula borboleta de 10 mm em malha fechada evitam o rompimento de coletores solares em noites frias sem desperdiçar água.">
+  <meta property="og:title" content="Proteção Solar Inteligente: Purga e Drenagem Automática Anti-Congelamento via IoT">
+  <meta property="og:description" content="Da física do congelamento ao purgador automático de 10 mm: simulador, calculadora de água e modelo 3D do CAD real.">
+  <meta property="og:type" content="article">
+  <meta name="theme-color" content="#1f2937">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f2937'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%23f97316'/%3E%3Cpath d='M32 8v10M32 46v10M8 32h10M46 32h10' stroke='%2338bdf8' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    if (window.tailwind) tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sun: { DEFAULT: '#f97316', gold: '#eab308' },
+            frost: { DEFAULT: '#0284c7', ice: '#38bdf8', ink: '#075985' },
+            ink: { DEFAULT: '#1f2937', soft: '#374151', mute: '#6b7280' }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Merriweather', 'Georgia', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --sun: #f97316; --gold: #eab308; --frost: #0284c7; --ice: #38bdf8;
+      --ink: #1f2937; --soft: #374151; --mute: #6b7280; --line: #e5e7eb; --wash: #f3f4f6;
+    }
+    html { scroll-behavior: smooth; scroll-padding-top: 68px; }
+    body { font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
+    :focus-visible { outline: 3px solid var(--ice); outline-offset: 2px; border-radius: 4px; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    /* Leitura longa */
+    .article p, .article li { font-family: Merriweather, Georgia, serif; font-size: 1.04rem; line-height: 1.85; color: var(--soft); }
+    .article p { max-width: 66ch; margin: 0 0 1.25rem; }
+    .article h3 { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.3rem; line-height: 1.35; margin: 2.2rem 0 .8rem; color: var(--ink); }
+    .article a.cite { color: var(--frost-ink, #075985); font-family: Inter, sans-serif; font-size: .78em; font-weight: 600; text-decoration: none; vertical-align: super; }
+    .article a.cite:hover { text-decoration: underline; }
+    .h2 { font-family: Merriweather, Georgia, serif; font-weight: 900; line-height: 1.15; letter-spacing: -.01em; font-size: clamp(1.85rem, 3.6vw, 2.7rem); }
+    .rule { display: block; width: 76px; height: 6px; margin-bottom: 1.1rem; background: linear-gradient(90deg, var(--sun) 0 50%, var(--ice) 50% 100%); }
+
+    /* Botões e controles */
+    .btn { display: inline-flex; align-items: center; gap: .55rem; font-weight: 600; font-size: .95rem; padding: .8rem 1.25rem; border-radius: 10px; border: 2px solid transparent; transition: transform .15s, background-color .15s, border-color .15s; cursor: pointer; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-sun { background: var(--sun); color: var(--ink); }
+    .btn-sun:hover { background: #fb923c; }
+    .btn-ice { border-color: var(--ice); color: #e0f2fe; }
+    .btn-ice:hover { background: rgba(56,189,248,.14); }
+    .btn-ghost { border-color: #4b5563; color: #e5e7eb; }
+    .btn-ghost:hover { border-color: #9ca3af; }
+    .btn-line { border-color: var(--line); color: var(--ink); background: #fff; font-size: .85rem; padding: .55rem .9rem; }
+    .btn-line:hover { border-color: #9ca3af; }
+    .btn-line.is-active, .seg button.is-active { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .seg button { padding: .55rem 1rem; font-size: .88rem; font-weight: 600; background: #fff; color: var(--soft); border: 0; cursor: pointer; }
+    .chip { font-size: .8rem; font-weight: 500; padding: .35rem .7rem; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--soft); cursor: pointer; }
+    .chip:hover { border-color: var(--ice); background: #f0f9ff; }
+    input[type=range] { width: 100%; height: 28px; accent-color: var(--sun); cursor: pointer; }
+    .range-frost { accent-color: var(--frost); }
+    select.sel { border: 2px solid var(--line); border-radius: 10px; padding: .5rem .7rem; font-size: .88rem; background: #fff; }
+
+    /* Cartões de widget */
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+    .stat { background: var(--wash); border-radius: 12px; padding: .8rem 1rem; }
+    .stat dt { font-size: .76rem; color: var(--mute); font-weight: 500; }
+    .stat dd { font-family: Merriweather, serif; font-weight: 700; font-size: 1.35rem; margin-top: .15rem; }
+
+    /* Simulador */
+    #simCard { --pipe: #cbd5e1; --bg: #f8fafc; --accent: #475569; }
+    #simCard[data-mode=frost] { --pipe: #7dd3fc; --bg: #e0f2fe; --accent: #0284c7; }
+    #simCard[data-mode=purge] { --pipe: #fdba74; --bg: #fff7ed; --accent: #ea580c; }
+    .sim-visual { background: var(--bg); border-radius: 12px; transition: background-color .4s; }
+    .pipe { fill: var(--pipe); stroke: #64748b; stroke-width: 2; transition: fill .4s; }
+    .chamber { fill: #fff; stroke: #64748b; stroke-width: 2; }
+    .water { stroke: var(--frost); stroke-width: 6; stroke-dasharray: 14 12; fill: none; stroke-linecap: round; animation: flow 1s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -26; } }
+    .svg-txt { font: 600 13px Inter, sans-serif; fill: #475569; }
+    .svg-angle { font: 700 22px Merriweather, serif; fill: var(--accent); }
+    .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+    .chart-grid { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 3 4; }
+    #simCond { font-weight: 600; font-size: .92rem; padding: .7rem .9rem; border-radius: 10px; background: var(--wash); border-left: 5px solid #9ca3af; }
+    #simCond[data-tone=frost] { background: #e0f2fe; border-color: var(--frost); color: #075985; }
+    #simCond[data-tone=run] { background: #fff7ed; border-color: var(--sun); color: #9a3412; }
+    .logbox { font: 500 .74rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--ink); color: #d1d5db; border-radius: 10px; padding: .8rem 1rem; min-height: 8.2rem; white-space: pre-wrap; word-break: break-all; }
+
+    /* Hero */
+    #heroDial { --accent: #eab308; }
+    #heroDial[data-mode=frost] { --accent: #38bdf8; }
+    #heroDial[data-mode=purge] { --accent: #f97316; }
+
+    /* Calculadora */
+    .bar-track { height: 38px; background: var(--wash); border-radius: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 10px; transition: width .35s; }
+    .timeline { position: relative; height: 34px; background: var(--wash); border-radius: 8px; overflow: hidden; }
+    .tl-cold { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(56,189,248,.28); }
+    .tl-tick { position: absolute; top: 6px; bottom: 6px; width: 4px; background: var(--sun); border-radius: 2px; }
+
+    /* Densidade */
+    .g-grid { stroke: var(--line); stroke-width: 1; }
+    .g-axis { stroke: #9ca3af; stroke-width: 1.5; }
+    .g-tick { font: 500 12px Inter, sans-serif; fill: var(--mute); }
+    .g-label { font: 600 12.5px Inter, sans-serif; fill: var(--soft); }
+    .g-line { fill: none; stroke: var(--frost); stroke-width: 3; stroke-linejoin: round; }
+    .g-dot { fill: #fff; stroke: var(--frost); stroke-width: 2; }
+    .g-peak { fill: var(--sun); stroke: #fff; stroke-width: 2; }
+    .g-drop { stroke: var(--sun); stroke-width: 1.5; stroke-dasharray: 4 4; }
+    .g-note { font: 700 12.5px Inter, sans-serif; fill: #c2410c; }
+    .g-note-frost { fill: var(--frost-ink, #075985); }
+
+    /* Diagrama de blocos */
+    .bd-box { fill: #fff; stroke: var(--ink); stroke-width: 2; }
+    .bd-box.sense { stroke: var(--frost); }
+    .bd-box.act { stroke: var(--sun); }
+    .bd-t { font: 700 13px Inter, sans-serif; fill: var(--ink); }
+    .bd-s { font: 500 11.5px Inter, sans-serif; fill: var(--mute); }
+    .bd-line { stroke: var(--ink); stroke-width: 2; fill: none; }
+    .bd-fb { stroke: var(--sun); stroke-width: 2.5; fill: none; stroke-dasharray: 6 5; }
+
+    /* Visualizador 3D */
+    .viewer-wrap { position: relative; height: 440px; background: #1f2937; border-radius: 16px; overflow: hidden; }
+    @media (min-width: 1024px) { .viewer-wrap { height: 560px; } }
+    .viewer-canvas { display: block; touch-action: none; cursor: grab; outline-offset: -4px; }
+    .viewer-canvas:active { cursor: grabbing; }
+    .viewer-status { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem; color: #e5e7eb; font-size: .95rem; pointer-events: none; }
+    .viewer-status[hidden] { display: none; }
+    .viewer-status[data-error="1"] { color: #fecaca; }
+    .viewer-hint { position: absolute; left: 14px; bottom: 12px; font-size: .74rem; color: #9ca3af; pointer-events: none; }
+    .tab { padding: .55rem 1rem; font-size: .88rem; font-weight: 600; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--soft); cursor: pointer; white-space: nowrap; }
+    .tab:hover { border-color: var(--ice); }
+    .tab.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .part-item { display: flex; align-items: center; gap: .5rem; border: 1px solid var(--line); border-radius: 12px; padding: .2rem .5rem .2rem .2rem; background: #fff; }
+    .part-item.is-selected { border-color: var(--sun); background: #fff7ed; }
+    .part-pick { flex: 1; display: flex; align-items: center; gap: .7rem; padding: .5rem; text-align: left; background: none; border: 0; cursor: pointer; border-radius: 10px; }
+    .part-swatch { width: 18px; height: 18px; border-radius: 5px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+    .part-text { display: flex; flex-direction: column; }
+    .part-name { font-weight: 600; font-size: .9rem; }
+    .part-dim { font-size: .76rem; color: var(--mute); }
+    .part-vis { display: flex; align-items: center; gap: .3rem; font-size: .76rem; color: var(--mute); cursor: pointer; }
+
+    /* Tabela */
+    .cmp th, .cmp td { padding: 1rem 1.1rem; vertical-align: top; text-align: left; font-size: .92rem; line-height: 1.55; border-bottom: 1px solid var(--line); }
+    .cmp thead th { font-family: Merriweather, serif; font-size: .98rem; line-height: 1.35; background: #fff; border-bottom: 3px solid var(--ink); }
+    .cmp tbody th { font-weight: 600; color: var(--ink); background: var(--wash); min-width: 9rem; }
+    .cmp .col-iot { background: #fffbeb; }
+    .cmp thead .col-iot { border-bottom-color: var(--sun); }
+
+    nav a.is-current { color: #fff; box-shadow: inset 0 -3px 0 var(--sun); }
+  </style>
+</head>
+<body>
+
+<!-- ============================ NAVEGAÇÃO ============================ -->
+<header class="sticky top-0 z-40 bg-ink text-gray-300 border-b border-gray-700">
+  <nav class="max-w-6xl mx-auto px-4 flex items-center gap-1 overflow-x-auto text-sm" aria-label="Seções do artigo">
+    <a href="#topo" class="font-bold text-white py-4 pr-4 whitespace-nowrap flex items-center gap-2">
+      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="14" fill="#f97316"/><path d="M32 6v12M32 46v12M6 32h12M46 32h12" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/></svg>
+      Purga 10 mm
+    </a>
+    <a href="#problema" class="px-3 py-4 whitespace-nowrap hover:text-white">Problema</a>
+    <a href="#ciclo" class="px-3 py-4 whitespace-nowrap hover:text-white">Ciclo</a>
+    <a href="#fundamentos" class="px-3 py-4 whitespace-nowrap hover:text-white">Fundamentos</a>
+    <a href="#bancada" class="px-3 py-4 whitespace-nowrap hover:text-white">Bancada</a>
+    <a href="#simulador" class="px-3 py-4 whitespace-nowrap hover:text-white">Simulador</a>
+    <a href="#economia" class="px-3 py-4 whitespace-nowrap hover:text-white">Economia</a>
+    <a href="#modelo3d" class="px-3 py-4 whitespace-nowrap hover:text-white">Modelo 3D</a>
+    <a href="#comparativo" class="px-3 py-4 whitespace-nowrap hover:text-white">Comparativo</a>
+    <a href="#referencias" class="px-3 py-4 whitespace-nowrap hover:text-white">Referências</a>
+  </nav>
+</header>
+
+<main id="topo">
+
+<!-- ============================ HERO ============================ -->
+<section class="bg-ink text-white">
+  <div class="max-w-6xl mx-auto px-4 py-14 lg:py-20 grid lg:grid-cols-12 gap-10 items-center">
+    <div class="lg:col-span-7">
+      <h1 class="font-serif font-black text-[2.1rem] sm:text-5xl leading-[1.12] tracking-tight">
+        Proteção Solar Inteligente: da Física do Congelamento ao Purgador Automático de 10 mm
+      </h1>
+      <p class="mt-6 text-lg text-gray-300 leading-relaxed max-w-[60ch]">
+        Como a combinação de sensores de temperatura, relógio em tempo real (RTC) e uma válvula borboleta em malha fechada evita o rompimento de coletores solares em noites frias sem desperdiçar água.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="#simulador" class="btn btn-sun">Testar Simulador de Purga</a>
+        <a href="#modelo3d" class="btn btn-ice">Ver Protótipo em 3D</a>
+        <a href="https://github.com/jfgonjr/purgaantigelo" target="_blank" rel="noopener" class="btn btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Repositório no GitHub
+        </a>
+      </div>
+      <dl class="mt-10 grid sm:grid-cols-3 gap-4 text-sm">
+        <div class="border-t-4 border-sun pt-3"><dt class="text-gray-400">Licença</dt><dd class="font-semibold mt-1">Open-Source</dd></div>
+        <div class="border-t-4 border-sun-gold pt-3" style="border-color:#eab308"><dt class="text-gray-400">Base científica</dt><dd class="font-semibold mt-1">Física do congelamento e 5 referências técnicas</dd></div>
+        <div class="border-t-4 border-frost-ice pt-3" style="border-color:#38bdf8"><dt class="text-gray-400">Tempo de leitura</dt><dd class="font-semibold mt-1">≈ 10 min</dd></div>
+      </dl>
+    </div>
+
+    <!-- Mostrador ao vivo, espelha o simulador -->
+    <div class="lg:col-span-5">
+      <div id="heroDial" data-mode="ok" class="rounded-2xl border border-gray-600 bg-[#111827]/60 p-6">
+        <svg viewBox="0 0 320 200" class="w-full" role="img" aria-label="Mostrador do ângulo da válvula, ligado ao simulador">
+          <path d="M42 168 A118 118 0 0 1 278 168" fill="none" stroke="#374151" stroke-width="16" stroke-linecap="round"/>
+          <path id="heroArc" d="" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round"/>
+          <g stroke="#6b7280" stroke-width="2" stroke-linecap="round">
+            <line x1="26" y1="168" x2="14" y2="168"/><line x1="294" y1="168" x2="306" y2="168"/>
+            <line x1="160" y1="34" x2="160" y2="22"/>
+          </g>
+          <g class="" font-family="Inter, sans-serif" font-size="12" fill="#9ca3af" text-anchor="middle">
+            <text x="14" y="190">0° fechada</text><text x="306" y="190">90° aberta</text><text x="160" y="16">45°</text>
+          </g>
+          <line id="heroNeedle" x1="160" y1="168" x2="42" y2="168" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="160" cy="168" r="9" fill="#fff"/>
+          <text id="heroTemp" x="160" y="122" text-anchor="middle" font-family="Merriweather, serif" font-weight="900" font-size="38" fill="#fff">4,0 °C</text>
+          <text id="heroAngle" x="160" y="146" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="15" fill="var(--accent)">0°</text>
+        </svg>
+        <div class="mt-2 flex items-center justify-between text-sm">
+          <span id="heroState" class="font-semibold">Válvula fechada</span>
+          <span id="heroWindow" class="text-gray-400">Janela noturna (22h–06h)</span>
+        </div>
+        <p class="mt-4 text-sm text-gray-400 leading-relaxed">Este mostrador acompanha o simulador mais abaixo. Baixe a temperatura de madrugada e veja a válvula abrir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ O PROBLEMA ============================ -->
+<section id="problema" class="py-16 lg:py-24">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Quando a água vira gelo dentro do coletor</h2>
+
+    <div class="mt-10 grid lg:grid-cols-12 gap-12 items-start">
+      <div class="lg:col-span-6 article">
+        <p>Quase todo líquido encolhe ao esfriar até congelar. A água é a exceção que importa para quem tem um aquecedor solar: ela só encolhe até cerca de 4 °C, onde atinge a densidade máxima. Abaixo disso passa a se expandir, e ao congelar a 0 °C ocupa cerca de 9% mais volume do que ocupava líquida<a class="cite" href="#ref1">[1]</a>.</p>
+        <p>Num coletor, a água está presa entre tubos de cobre e a cobertura do equipamento. Quando o gelo se forma e o volume cresce, não há para onde ir: a pressão sobe até que algo ceda, em geral o ponto mais fraco da tubulação ou de uma emenda. Uma única noite de geada pode ser suficiente.</p>
+        <p>O perigo também começa antes do que o termômetro do quintal sugere. Superfícies expostas a um céu limpo perdem calor por radiação e podem ficar mais frias que o ar ao redor. Por isso o projeto mede a temperatura <em>na própria tubulação externa</em>, no ponto mais frio, e usa um limiar de 3 °C, com folga acima do zero.</p>
+
+        <h3>O que as soluções tradicionais deixam a desejar</h3>
+        <p>As válvulas termostáticas mecânicas operam por fluxo contínuo: enquanto está frio, a água corre. Numa noite longa isso significa centenas de litros de água tratada indo para o ralo. Além disso, o elemento mecânico fica exposto a calcário e minerais; a incrustação pode travar a válvula justamente na noite em que ela seria necessária, e como não há realimentação ninguém percebe.</p>
+        <p>A proposta deste projeto inverte a lógica: em vez de deixar a água correr até esquentar, drena só o necessário em pulsos curtos, e <strong>confere</strong> que a válvula voltou a fechar.</p>
+      </div>
+
+      <figure class="lg:col-span-6 panel p-5 sm:p-6">
+        <figcaption class="font-serif font-bold text-lg mb-1">Densidade da água entre 0 e 10 °C</figcaption>
+        <p class="text-sm text-ink-mute mb-3">A curva tem o pico em 4 °C. Na escala, a diferença entre os pontos é pequena; a grande mudança vem no congelamento.</p>
+        <svg id="densityChart" viewBox="0 0 520 280" class="w-full h-auto" role="img" aria-label="Gráfico: a densidade da água é máxima em 4 graus Celsius e diminui em direção a 0 e a 10 graus"></svg>
+        <p class="text-sm text-ink-soft mt-3 leading-relaxed">Gelo a 0 °C tem densidade próxima de 917 kg/m³, contra cerca de 999,8 kg/m³ da água líquida na mesma temperatura. A razão entre os dois valores dá os 9% de expansão<a class="cite" href="#ref1" style="font-size:.7rem;vertical-align:super;text-decoration:none;color:#075985;font-weight:600">[1]</a>.</p>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CICLO EM 4 ETAPAS ============================ -->
+<section id="ciclo" class="py-16 lg:py-24 bg-wash" style="background:#f3f4f6">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">O ciclo inteligente em 4 etapas</h2>
+    <p class="mt-4 text-ink-soft max-w-2xl leading-relaxed">Todo o comportamento cabe em quatro verbos. Os limites abaixo são os valores padrão do firmware e podem ser ajustados no topo do código.</p>
+
+    <ol class="mt-10 grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <li class="panel p-6 border-t-[6px]" style="border-top-color:#38bdf8">
+        <span class="font-serif font-black text-4xl text-frost-ink" style="color:#075985">1</span>
+        <h3 class="font-serif font-bold text-xl mt-2">Sentir</h3>
+        <p class="mt-3 text-sm text-ink-soft leading-relaxed">Um DS18B20 blindado, preso à tubulação externa no ponto mais frio, mede a temperatura. O RTC DS3231 informa a hora.</p>
+      </li>
+      <li class="panel p-6 border-t-[6px]" style="border-top-color:#0284c7">
+        <span class="font-serif font-black text-4xl" style="color:#075985">2</span>
+        <h3 class="font-serif font-bold text-xl mt-2">Decidir</h3>
+        <p class="mt-3 text-sm text-ink-soft leading-relaxed">A purga só começa dentro da janela noturna (22h às 06h), com T &lt; 3 °C e pelo menos 30 minutos desde a última purga.</p>
+      </li>
+      <li class="panel p-6 border-t-[6px]" style="border-top-color:#f97316">
+        <span class="font-serif font-black text-4xl" style="color:#c2410c">3</span>
+        <h3 class="font-serif font-bold text-xl mt-2">Agir</h3>
+        <p class="mt-3 text-sm text-ink-soft leading-relaxed">A válvula abre a 90° por 30 s, drena a água estagnada e fecha na sequência. O AS5600 confere que o disco voltou a 0° ± 3°.</p>
+      </li>
+      <li class="panel p-6 border-t-[6px]" style="border-top-color:#eab308">
+        <span class="font-serif font-black text-4xl" style="color:#a16207">4</span>
+        <h3 class="font-serif font-bold text-xl mt-2">Avisar</h3>
+        <p class="mt-3 text-sm text-ink-soft leading-relaxed">Temperatura, hora, ângulo e estado saem pela serial; no ESP32 o mesmo dado pode seguir por Wi-Fi. Uma falha de travamento fica gravada na EEPROM.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ FUNDAMENTAÇÃO ============================ -->
+<section id="fundamentos" class="py-16 lg:py-24">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Fundamentação científica e materiais</h2>
+
+    <div class="mt-10 grid lg:grid-cols-12 gap-12">
+      <div class="lg:col-span-7 article">
+        <h3 style="margin-top:0">Sensor digital DS18B20 × sondas analógicas</h3>
+        <p>Uma sonda analógica, como um termistor NTC, entrega uma tensão que depende da referência do conversor, do ruído e do comprimento do cabo. Em uma tubulação no telhado, exposta a sol e chuva, esses efeitos entram direto na leitura.</p>
+        <p>O DS18B20 digitaliza a medida dentro da própria cápsula e a envia pelo protocolo OneWire. O datasheet especifica precisão de ±0,5 °C entre −10 °C e +85 °C<a class="cite" href="#ref2">[2]</a>, e a versão comercial em cápsula de aço inox é estanque. Cada sensor tem um endereço único de 64 bits, o que permite acrescentar outros pontos de medição no mesmo fio. Lembre do resistor de pull-up de 4,7 kΩ entre DATA e a alimentação.</p>
+
+        <h3>Janela noturna com o RTC DS3231</h3>
+        <p>O DS3231 mantém a hora com um oscilador compensado por temperatura e bateria de backup<a class="cite" href="#ref3">[3]</a>. Condicionar a purga ao horário noturno evita disparos desnecessários: de dia, a insolação e a água aquecida no coletor tornam o congelamento improvável, e purgar nessa condição jogaria fora água quente e tratada.</p>
+        <p>Se o RTC falhar, o firmware assume que é noite (parâmetro <code>RTC_FALHA_ASSUME_NOITE</code>). Entre uma purga a mais e um coletor rompido, o projeto escolhe a purga a mais.</p>
+
+        <h3>Resistência térmica e de materiais</h3>
+        <p>Os rebaixos de Ø10,3 mm recebem O-rings de Viton (FKM) ou silicone, que suportam o ciclo de −5 °C a +90 °C do projeto; na montagem, use graxa de silicone compatível. Para as peças impressas, ABS ou ASA são a escolha segura: o ASA ainda resiste melhor à radiação UV. Evite PLA, que amolece perto de 60 °C, temperatura que uma tubulação ao sol pode alcançar.</p>
+      </div>
+
+      <aside class="lg:col-span-5">
+        <div class="panel p-6 sticky top-24">
+          <h3 class="font-serif font-bold text-lg">Ficha rápida dos componentes</h3>
+          <dl class="mt-4 divide-y divide-gray-200 text-sm">
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Temperatura</dt><dd class="font-semibold text-right">DS18B20 · OneWire · ±0,5 °C</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Relógio</dt><dd class="font-semibold text-right">DS3231 · I²C · TCXO</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Ângulo</dt><dd class="font-semibold text-right">AS5600 · I²C · 12 bits</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Vedação</dt><dd class="font-semibold text-right">Viton ou silicone</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Faixa térmica</dt><dd class="font-semibold text-right">−5 °C a +90 °C</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Impressão 3D</dt><dd class="font-semibold text-right">ABS ou ASA</dd></div>
+            <div class="py-3 flex justify-between gap-4"><dt class="text-ink-mute">Alimentação</dt><dd class="font-semibold text-right">12 V</dd></div>
+          </dl>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DA TEORIA À BANCADA ============================ -->
+<section id="bancada" class="py-16 lg:py-24" style="background:#f3f4f6">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Da teoria à bancada: o purgador físico de 10 mm</h2>
+
+    <div class="mt-10 grid lg:grid-cols-2 gap-12 article">
+      <div>
+        <p>O tubo entra pelo corpo ao longo do eixo X e atravessa uma câmara circular de Ø32 mm, onde gira o obturador. O conjunto é compacto: o corpo mede <strong>88 × 50 × 36 mm</strong>, e com a caixa eletrônica e a tampa o envelope total chega a 88 × 50 × 62 mm. O canal de passagem tem Ø10 mm.</p>
+        <p>Um ímã diametral na ponta do eixo de Ø6 mm fica sob o encoder magnético <strong>AS5600</strong> (I²C, 12 bits)<a class="cite" href="#ref4">[4]</a>. São 4096 contagens por volta, cerca de 0,088° por passo. O microcontrolador não supõe que chegou: lê o ângulo absoluto e corrige. A mesma leitura denuncia travamento (<em>stall</em>): se o motor está acionado e o ângulo não muda, há obstrução.</p>
+        <p>O atuador é um motor DC N20 com redução, comandado por uma ponte H (L9110 ou DRV8833). Na partida, a válvula fecha devagar até o batente e grava essa posição como 0°.</p>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Segurança embutida no firmware</h3>
+        <ul class="space-y-3 list-disc pl-5">
+          <li><strong>Partida segura:</strong> ao energizar, fecha até o batente e calibra o zero.</li>
+          <li><strong>Anti-travamento:</strong> até 2 tentativas de desencravamento; persistindo, entra em <code>FALHA</code>, para o motor e bloqueia os ciclos automáticos.</li>
+          <li><strong>Validação do fechamento:</strong> depois de cada purga o ângulo deve estar em 0° ± 3°.</li>
+          <li><strong>Polaridade:</strong> se a válvula se move no sentido contrário ao esperado, a manobra é abortada com aviso.</li>
+          <li><strong>Sensor inválido:</strong> emite aviso; a purga preventiva é opcional.</li>
+        </ul>
+      </div>
+    </div>
+
+    <figure class="mt-12 panel p-5 sm:p-8 overflow-x-auto">
+      <figcaption class="font-serif font-bold text-lg mb-4">Malha fechada: o AS5600 realimenta o microcontrolador</figcaption>
+      <svg viewBox="0 0 760 300" class="w-full h-auto min-w-[640px]" role="img" aria-label="Diagrama de blocos: DS18B20 e DS3231 alimentam o microcontrolador, que comanda a ponte H, o motor N20 e o eixo com obturador. O AS5600 lê o ângulo do eixo e realimenta o microcontrolador.">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1f2937"/></marker>
+          <marker id="arrO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f97316"/></marker>
+        </defs>
+        <rect class="bd-box sense" x="10" y="30" width="150" height="56" rx="10"/>
+        <text class="bd-t" x="85" y="54" text-anchor="middle">DS18B20</text><text class="bd-s" x="85" y="72" text-anchor="middle">temperatura · OneWire</text>
+        <rect class="bd-box sense" x="10" y="112" width="150" height="56" rx="10"/>
+        <text class="bd-t" x="85" y="136" text-anchor="middle">RTC DS3231</text><text class="bd-s" x="85" y="154" text-anchor="middle">hora · I²C</text>
+        <rect class="bd-box" x="225" y="62" width="150" height="92" rx="10"/>
+        <text class="bd-t" x="300" y="98" text-anchor="middle">Arduino / ESP32</text><text class="bd-s" x="300" y="118" text-anchor="middle">noite e T &lt; 3 °C?</text><text class="bd-s" x="300" y="134" text-anchor="middle">decide e registra</text>
+        <rect class="bd-box act" x="440" y="70" width="130" height="76" rx="10"/>
+        <text class="bd-t" x="505" y="104" text-anchor="middle">Ponte H</text><text class="bd-s" x="505" y="124" text-anchor="middle">DRV8833 / L9110</text>
+        <rect class="bd-box act" x="620" y="70" width="130" height="76" rx="10"/>
+        <text class="bd-t" x="685" y="104" text-anchor="middle">Motor DC N20</text><text class="bd-s" x="685" y="124" text-anchor="middle">com redução</text>
+        <rect class="bd-box act" x="610" y="208" width="150" height="62" rx="10"/>
+        <text class="bd-t" x="685" y="234" text-anchor="middle">Eixo Ø6 + disco Ø32</text><text class="bd-s" x="685" y="252" text-anchor="middle">0° fechada · 90° aberta</text>
+        <rect class="bd-box sense" x="370" y="212" width="160" height="56" rx="10"/>
+        <text class="bd-t" x="450" y="236" text-anchor="middle">AS5600 · 12 bits</text><text class="bd-s" x="450" y="254" text-anchor="middle">lê o ímã do eixo</text>
+        <path class="bd-line" marker-end="url(#arr)" d="M160 58 L195 58 L195 90 L225 90"/>
+        <path class="bd-line" marker-end="url(#arr)" d="M160 140 L195 140 L195 126 L225 126"/>
+        <path class="bd-line" marker-end="url(#arr)" d="M375 108 H440"/>
+        <path class="bd-line" marker-end="url(#arr)" d="M570 108 H620"/>
+        <path class="bd-line" marker-end="url(#arr)" d="M685 146 V208"/>
+        <path class="bd-fb" marker-end="url(#arrO)" d="M610 240 H530"/>
+        <path class="bd-fb" marker-end="url(#arrO)" d="M370 240 H300 V154"/>
+        <text class="bd-s" x="570" y="232" text-anchor="middle" style="fill:#c2410c;font-weight:700">ângulo</text>
+      </svg>
+    </figure>
+
+    <div class="mt-8 rounded-2xl border-l-8 border-sun bg-white p-6" style="border-left-color:#f97316">
+      <p class="font-semibold">Estado do projeto: protótipo.</p>
+      <p class="mt-2 text-ink-soft text-[.95rem] leading-relaxed">Teste a válvula e toda a lógica de purga em bancada, com água, antes de instalar. O sistema não substitui válvulas anticongelamento certificadas nem as proteções exigidas para o seu aquecedor solar. Pense no que acontece se a válvula falhar <em>aberta</em> (perda de água) ou <em>fechada</em> (risco de congelamento), e ligue a saída a um ponto de descarte adequado. A norma brasileira de projeto e instalação de aquecimento solar<a class="cite" href="#ref5" style="font-size:.7rem;vertical-align:super;text-decoration:none;color:#075985;font-weight:600">[5]</a> é um bom ponto de partida para verificar as exigências da sua instalação.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ WIDGET 1: SIMULADOR ============================ -->
+<section id="simulador" class="py-16 lg:py-24">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Simulador de temperatura e purga automática</h2>
+    <p class="mt-4 text-ink-soft max-w-2xl leading-relaxed">Mexa na temperatura e no horário. A lógica segue o firmware: noite, T &lt; 3 °C e intervalo cumprido abrem a válvula a 90° por 30 s; depois, 30 minutos de espera. A espera pode ser acelerada para você ver o segundo ciclo.</p>
+
+    <div id="simCard" data-mode="ok" class="mt-10 panel p-4 sm:p-6 grid lg:grid-cols-5 gap-8">
+      <!-- Controles -->
+      <div class="lg:col-span-2 space-y-6">
+        <div>
+          <div class="flex items-baseline justify-between">
+            <label for="tempRange" class="font-semibold">Temperatura externa do coletor</label>
+            <output id="tempOut" for="tempRange" class="font-serif font-bold text-2xl">4,0 °C</output>
+          </div>
+          <input id="tempRange" type="range" min="-5" max="15" step="0.1" value="4" class="range-frost">
+          <div class="flex justify-between text-xs text-ink-mute -mt-1"><span>−5 °C</span><span>limiar 3 °C</span><span>15 °C</span></div>
+          <div class="mt-3 flex flex-wrap gap-2" aria-label="Situações prontas">
+            <button type="button" class="chip" data-preset="12|d">Tarde amena, 12 °C</button>
+            <button type="button" class="chip" data-preset="5|n">Noite amena, 5 °C</button>
+            <button type="button" class="chip" data-preset="1.5|n">Madrugada limpa, 1,5 °C</button>
+            <button type="button" class="chip" data-preset="-4|n">Geada forte, −4 °C</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-2" id="lblHora">Horário</p>
+          <div class="seg" role="group" aria-labelledby="lblHora">
+            <button type="button" id="btnNight" class="is-active" aria-pressed="true">Noturno (22h–06h)</button>
+            <button type="button" id="btnDay" aria-pressed="false">Diurno</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-end gap-4">
+          <div>
+            <label for="speedSel" class="font-semibold block mb-2 text-sm">Espera (hold-off) acelerada</label>
+            <select id="speedSel" class="sel">
+              <option value="1">1× (tempo real)</option>
+              <option value="60" selected>60× (30 min em 30 s)</option>
+              <option value="300">300× (30 min em 6 s)</option>
+            </select>
+          </div>
+          <button type="button" id="btnManual" class="btn btn-line">Purga manual</button>
+          <button type="button" id="btnReset" class="btn btn-line">Reiniciar</button>
+        </div>
+
+        <p id="simCond" data-tone="idle" role="status">T ≥ 3,0 °C: sem risco de congelamento.</p>
+
+        <dl class="grid grid-cols-2 gap-3">
+          <div class="stat"><dt>Estado da válvula</dt><dd id="simState">Fechada</dd></div>
+          <div class="stat"><dt>Purga em curso</dt><dd id="purgeCountdown">— s</dd></div>
+          <div class="stat"><dt>Espera até a próxima</dt><dd id="holdCountdown">00:00</dd></div>
+          <div class="stat"><dt>Purgas / água drenada</dt><dd><span id="purgeTotal">0</span> · <span id="litersTotal">0,0 L</span></dd></div>
+        </dl>
+      </div>
+
+      <!-- Visual -->
+      <div class="lg:col-span-3 space-y-4">
+        <div class="sim-visual p-3 sm:p-4">
+          <svg viewBox="0 0 520 240" class="w-full h-auto" role="img" aria-label="Vista superior da válvula borboleta: o disco gira de 0 a 90 graus conforme o ciclo de purga">
+            <rect class="pipe" x="10" y="100" width="500" height="40" rx="6"/>
+            <circle class="chamber" cx="260" cy="120" r="64"/>
+            <path id="valveFlow" class="water" d="M20 120 H500" style="opacity:0"/>
+            <g transform="translate(260 120)">
+              <g id="valveDisc" transform="rotate(0)">
+                <rect x="-3" y="-62" width="6" height="124" rx="3" fill="#f97316"/>
+                <circle r="11" fill="#eab308" stroke="#1f2937" stroke-width="2"/>
+                <rect x="-11" y="-2" width="11" height="4" fill="#0284c7"/>
+                <rect x="0" y="-2" width="11" height="4" fill="#dc2626"/>
+              </g>
+            </g>
+            <text class="svg-txt" x="14" y="92">entrada</text>
+            <text class="svg-txt" x="506" y="92" text-anchor="end">dreno</text>
+            <text class="svg-txt" x="260" y="38" text-anchor="middle">câmara Ø32 mm</text>
+            <text class="svg-angle" x="260" y="226" text-anchor="middle">Ângulo <tspan id="valveAngleTxt">0°</tspan></text>
+          </svg>
+        </div>
+
+        <div class="sim-visual p-3 sm:p-4">
+          <p class="text-sm font-semibold mb-1">Ângulo da válvula nos últimos 120 s</p>
+          <svg viewBox="0 0 520 110" class="w-full h-auto" role="img" aria-label="Histórico do ângulo da válvula">
+            <line class="chart-grid" x1="36" x2="510" y1="12" y2="12"/>
+            <line class="chart-grid" x1="36" x2="510" y1="52" y2="52"/>
+            <line class="chart-grid" x1="36" x2="510" y1="92" y2="92"/>
+            <text class="svg-txt" x="30" y="16" text-anchor="end">90°</text>
+            <text class="svg-txt" x="30" y="56" text-anchor="end">45°</text>
+            <text class="svg-txt" x="30" y="96" text-anchor="end">0°</text>
+            <path id="chartLine" class="chart-line" d=""/>
+          </svg>
+        </div>
+
+        <div>
+          <p class="text-sm font-semibold mb-2">Telemetria simulada</p>
+          <pre id="simLog" class="logbox" aria-live="polite"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ WIDGET 2: ECONOMIA DE ÁGUA ============================ -->
+<section id="economia" class="py-16 lg:py-24" style="background:#f3f4f6">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Calculadora de economia de água</h2>
+    <p class="mt-4 text-ink-soft max-w-2xl leading-relaxed">Compare o descarte contínuo de uma válvula passiva com o volume drenado em pulsos de 30 s pelo purgador. É um modelo didático: troque os valores pelos da sua instalação.</p>
+
+    <div class="mt-10 grid lg:grid-cols-2 gap-6">
+      <div class="panel p-6 space-y-6">
+        <div>
+          <div class="flex items-baseline justify-between"><label for="calcCold" class="font-semibold">Horas abaixo de 3 °C na noite</label><output id="calcColdOut" class="font-serif font-bold text-xl">8,0 h</output></div>
+          <input id="calcCold" type="range" min="0" max="8" step="0.5" value="8" class="range-frost">
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between"><label for="calcCont" class="font-semibold">Vazão do descarte contínuo tradicional</label><output id="calcContOut" class="font-serif font-bold text-xl">0,50 L/min</output></div>
+          <input id="calcCont" type="range" min="0.1" max="2" step="0.05" value="0.5">
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between"><label for="calcPurge" class="font-semibold">Vazão pelo canal de 10 mm aberto</label><output id="calcPurgeOut" class="font-serif font-bold text-xl">4,0 L/min</output></div>
+          <input id="calcPurge" type="range" min="1" max="10" step="0.5" value="4">
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between"><label for="calcNights" class="font-semibold">Noites frias por temporada</label><output id="calcNightsOut" class="font-serif font-bold text-xl">30 noites</output></div>
+          <input id="calcNights" type="range" min="1" max="90" step="1" value="30" class="range-frost">
+        </div>
+        <p class="text-sm text-ink-mute leading-relaxed">Fixos no firmware: purga de 30 s e espera mínima de 30 min entre purgas. A vazão real depende da pressão da rede e do que está ligado ao dreno; meça na sua instalação.</p>
+      </div>
+
+      <div class="panel p-6">
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between text-sm font-semibold mb-1"><span>Descarte contínuo tradicional</span><span id="valTrad">240 L/noite</span></div>
+            <div class="bar-track"><div id="barTrad" class="bar-fill" style="width:100%;background:#0284c7"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm font-semibold mb-1"><span>Purgador IoT de 10 mm, em pulsos</span><span id="valIot">32 L/noite</span></div>
+            <div class="bar-track"><div id="barIot" class="bar-fill" style="width:13%;background:#f97316"></div></div>
+          </div>
+        </div>
+
+        <dl class="mt-7 grid grid-cols-3 gap-3">
+          <div class="stat"><dt>Economia por noite</dt><dd id="calcSaved">208 L</dd></div>
+          <div class="stat"><dt>Redução</dt><dd id="calcPct">87%</dd></div>
+          <div class="stat"><dt>Na temporada</dt><dd id="calcSeason">6,2 m³</dd></div>
+        </dl>
+
+        <div class="mt-7">
+          <p class="text-sm font-semibold mb-2">Pulsos numa noite de 8 h: <span id="calcPulses" class="font-normal text-ink-soft">16 pulsos de 2,0 L</span></p>
+          <div id="calcTicks" class="timeline" aria-hidden="true"></div>
+          <div class="flex justify-between text-xs text-ink-mute mt-1"><span>22h</span><span>02h</span><span>06h</span></div>
+        </div>
+        <p id="calcNote" class="mt-4 text-sm text-red-700 font-medium" role="status"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ WIDGET 3: MODELO 3D ============================ -->
+<section id="modelo3d" class="py-16 lg:py-24">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Exploded view do purgador (CAD 3D)</h2>
+    <p class="mt-4 text-ink-soft max-w-2xl leading-relaxed">As 7 peças são os STL reais do projeto. Arraste para girar, use o controle para explodir a montagem e escolha uma aba para destacar um subsistema. O disco e o eixo giram junto com o simulador.</p>
+
+    <div class="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Subsistemas">
+      <button type="button" class="tab is-active" role="tab" aria-selected="true" data-view="conjunto">Conjunto</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-view="camara">Câmara de 32 mm</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-view="canal">Canal de 10 mm</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-view="encoder">AS5600 + eixo</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-view="caixa">Caixa eletrônica</button>
+    </div>
+
+    <div class="mt-5 grid lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-8">
+        <div id="viewerCanvasWrap" class="viewer-wrap">
+          <div id="viewerStatus" class="viewer-status" role="status">Carregando as 7 peças do CAD…</div>
+          <p class="viewer-hint">Arraste para girar · pinça ou Ctrl + roda para zoom · clique numa peça</p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 space-y-5">
+        <div class="panel p-5 space-y-5">
+          <div>
+            <div class="flex items-baseline justify-between"><label for="explodeRange" class="font-semibold">Explodir</label><output id="explodeOut" class="font-serif font-bold text-lg">0%</output></div>
+            <input id="explodeRange" type="range" min="0" max="100" step="1" value="0">
+          </div>
+          <div>
+            <div class="flex items-baseline justify-between"><label for="viewerAngle" class="font-semibold">Ângulo da válvula</label><output id="viewerAngleOut" class="font-serif font-bold text-lg">0°</output></div>
+            <input id="viewerAngle" type="range" min="0" max="90" step="1" value="0" class="range-frost" disabled>
+            <label class="mt-1 flex items-center gap-2 text-sm text-ink-soft cursor-pointer"><input id="syncSim" type="checkbox" checked> Seguir o simulador</label>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="autoRotate" class="btn btn-line" aria-pressed="false">Girar sozinho</button>
+            <button type="button" id="resetView" class="btn btn-line">Recentralizar</button>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-serif font-bold text-lg mb-3">Peças do STL</h3>
+          <ul id="partList" class="space-y-2"></ul>
+          <p id="partInfo" class="mt-3 text-sm text-ink-soft leading-relaxed min-h-[3.5rem]" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TABELA COMPARATIVA ============================ -->
+<section id="comparativo" class="py-16 lg:py-24" style="background:#f3f4f6">
+  <div class="max-w-6xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2 max-w-3xl">Três abordagens lado a lado</h2>
+    <p class="mt-4 text-ink-soft max-w-2xl leading-relaxed">Comparação qualitativa. O purgador de 10 mm é um protótipo e ainda não tem medições de campo.</p>
+
+    <div class="mt-8 overflow-x-auto panel">
+      <table class="cmp w-full min-w-[820px] border-collapse">
+        <thead>
+          <tr>
+            <th scope="col" style="background:#fff"><span class="sr-only">Critério</span></th>
+            <th scope="col">Válvula termostática mecânica passiva</th>
+            <th scope="col">Drenagem contínua manual</th>
+            <th scope="col" class="col-iot">Sistema IoT de purga por demanda de 10 mm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Gatilho</th><td>Elemento térmico que abre numa temperatura fixa</td><td>Alguém precisa lembrar de abrir o registro</td><td class="col-iot">DS18B20 &lt; 3,0 °C dentro da janela noturna do RTC (22h–06h)</td></tr>
+          <tr><th scope="row">Atuação</th><td>Abre e escoa enquanto estiver frio</td><td>Fluxo contínuo ou gotejamento até alguém fechar</td><td class="col-iot">Pulso: 90° por 30 s, fecha e espera 30 min antes de poder repetir</td></tr>
+          <tr><th scope="row">Consumo de água</th><td>Contínuo durante todo o período frio; pode chegar a centenas de litros por noite</td><td>Tende ao excesso, por precaução</td><td class="col-iot">Limitado ao volume dos pulsos (veja a calculadora)</td></tr>
+          <tr><th scope="row">Posição da válvula</th><td>Sem confirmação</td><td>Conferência visual, presencial</td><td class="col-iot">AS5600 de 12 bits; fechamento validado em 0° ± 3°</td></tr>
+          <tr><th scope="row">Modos de falha</th><td>Calcário e minerais podem travar o mecanismo, sem aviso</td><td>Esquecimento: água desperdiçada ou gelo</td><td class="col-iot">Detecta travamento, tenta desencravar 2 vezes e bloqueia ciclos em <code>FALHA</code>; sem RTC, assume noite</td></tr>
+          <tr><th scope="row">Informação ao usuário</th><td>Nenhuma</td><td>Nenhuma</td><td class="col-iot">Telemetria serial; estado de falha gravado na EEPROM</td></tr>
+          <tr><th scope="row">Maturidade</th><td>Solução comercial consolidada</td><td>Prática comum, dependente de pessoas</td><td class="col-iot">Protótipo open-source: teste em bancada antes de instalar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ REFERÊNCIAS ============================ -->
+<section id="referencias" class="py-16 lg:py-24">
+  <div class="max-w-4xl mx-auto px-4">
+    <span class="rule"></span>
+    <h2 class="h2">Referências bibliográficas</h2>
+    <p class="mt-3 text-sm text-ink-mute">Formato IEEE. Confira a edição vigente de normas e datasheets antes de projetar.</p>
+    <ol class="mt-8 space-y-5 text-[.95rem] leading-relaxed text-ink-soft">
+      <li id="ref1">[1] G. S. Kell, “Density, thermal expansivity, and compressibility of liquid water from 0° to 150°C: Correlations and tables for atmospheric pressure and saturation reviewed and expressed on 1968 temperature scale,” <em>J. Chem. Eng. Data</em>, vol. 20, no. 1, pp. 97–105, 1975.</li>
+      <li id="ref2">[2] Maxim Integrated (Analog Devices), “DS18B20: Programmable Resolution 1-Wire Digital Thermometer,” datasheet. [Online]. Disponível em: <a class="underline text-frost-ink" style="color:#075985" href="https://www.analog.com/en/products/ds18b20.html" target="_blank" rel="noopener">analog.com/en/products/ds18b20</a></li>
+      <li id="ref3">[3] Maxim Integrated (Analog Devices), “DS3231: Extremely Accurate I²C-Integrated RTC/TCXO/Crystal,” datasheet. [Online]. Disponível em: <a class="underline" style="color:#075985" href="https://www.analog.com/en/products/ds3231.html" target="_blank" rel="noopener">analog.com/en/products/ds3231</a></li>
+      <li id="ref4">[4] ams OSRAM Group, “AS5600: 12-Bit Programmable Contactless Potentiometer,” datasheet v1-06, 2018. [Online]. Disponível em: <a class="underline" style="color:#075985" href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5600-datasheet-en.pdf" target="_blank" rel="noopener">infineon.com (AS5600 datasheet)</a></li>
+      <li id="ref5">[5] Associação Brasileira de Normas Técnicas (ABNT), “ABNT NBR 15569: Sistema de aquecimento solar de água em circuito direto — Projeto e instalação,” Rio de Janeiro (consultar a edição vigente).</li>
+      <li id="ref6">[6] jfgonjr, “purgaantigelo: purga anti-congelamento de 10 mm para aquecedores solares,” repositório GitHub. [Online]. Disponível em: <a class="underline" style="color:#075985" href="https://github.com/jfgonjr/purgaantigelo" target="_blank" rel="noopener">github.com/jfgonjr/purgaantigelo</a></li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="bg-ink text-gray-300">
+  <div class="max-w-4xl mx-auto px-4 py-12 text-sm leading-relaxed">
+    <p class="font-semibold text-white">Material de divulgação científica e projetos maker.</p>
+    <p class="mt-2">O protótipo não substitui válvulas anticongelamento certificadas nem as proteções exigidas para o seu aquecedor solar. Valide tudo em bancada, com água, antes de instalar.</p>
+    <p class="mt-4"><a class="underline text-white" href="https://github.com/jfgonjr/purgaantigelo" target="_blank" rel="noopener">Repositório no GitHub</a></p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/main.js"></script>
+<script src="js/viewer.js"></script>
+<script>
+  // Destaca no menu a seção que está na tela
+  (() => {
+    const links = [...document.querySelectorAll('nav a[href^="#"]')];
+    const map = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting && map.has(e.target.id)) {
+          links.forEach((l) => l.classList.remove('is-current'));
+          map.get(e.target.id).classList.add('is-current');
+        }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    map.forEach((_, id) => { const s = document.getElementById(id); s && io.observe(s); });
+  })();
+</script>
+</body>
+</html>
